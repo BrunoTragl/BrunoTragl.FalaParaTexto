@@ -10,9 +10,12 @@ namespace BrunoTragl.FalaParaTexto.ConsoleApp
     {
         public async static Task Main(string[] args)
         {
-            var speechConfig = new SpeechConfiguration();
-            speechConfig.MicConfiguration();
+            //SpeechConfigurationBase speechConfig = new ShortSpeech();
+            SpeechConfigurationBase speechConfig = new ContiniuosSpeech();
             await speechConfig.StartRecorder();
+
+            Console.WriteLine("Aguardando uma tecla..");
+            Console.ReadKey();
         }
     }
 }

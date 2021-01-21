@@ -1,30 +1,34 @@
-﻿using System;
-using Microsoft.CognitiveServices.Speech;
+﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
+using System;
 using System.Configuration;
 using System.Threading.Tasks;
 
 namespace BrunoTragl.FalaParaTexto.ConsoleApp
 {
-    public class SpeechConfiguration
+    public abstract class SpeechConfigurationBase
     {
-        private SpeechConfig _speechConfig;
-        private SpeechRecognizer _speechRecognizer;
-        public SpeechConfiguration()
+        protected SpeechConfig _speechConfig;
+        protected SpeechRecognizer _speechRecognizer;
+        protected TaskCompletionSource<int> _stopRecognition = new TaskCompletionSource<int>();
+
+        public SpeechConfigurationBase()
         {
             var chave = ConfigurationManager.AppSettings["chave_azure"];
             var idioma = "pt-BR";
             var uri = new Uri("https://brazilsouth.api.cognitive.microsoft.com/sts/v1.0/issuetoken");
             _speechConfig = SpeechConfig.FromEndpoint(uri, chave);
             _speechConfig.SpeechRecognitionLanguage = idioma;
+            this.MicConfiguration();
         }
 
-        public void MicConfiguration()
+        protected virtual void MicConfiguration()
         {
             try
             {
                 var audioConfig = AudioConfig.FromDefaultMicrophoneInput();
                 _speechRecognizer = new SpeechRecognizer(_speechConfig, audioConfig);
+                AddEvents();
             }
             catch (Exception ex)
             {
@@ -32,10 +36,8 @@ namespace BrunoTragl.FalaParaTexto.ConsoleApp
             }
         }
 
-        public async Task StartRecorder()
+        protected void AddEvents()
         {
-            var stopRecognition = new TaskCompletionSource<int>();
-
             _speechRecognizer.Recognizing += (s, e) =>
             {
                 Console.WriteLine($"RECOGNIZING: Text={e.Result.Text}");
@@ -68,7 +70,7 @@ namespace BrunoTragl.FalaParaTexto.ConsoleApp
                     Console.WriteLine($"CANCELED: Did you update the subscription info?");
                 }
 
-                stopRecognition.TrySetResult(0);
+                _stopRecognition.TrySetResult(0);
 
                 Console.WriteLine("Aguardando uma tecla..");
                 Console.ReadKey();
@@ -77,25 +79,16 @@ namespace BrunoTragl.FalaParaTexto.ConsoleApp
             _speechRecognizer.SessionStopped += (s, e) =>
             {
                 Console.WriteLine("\n    Session stopped event.");
-                stopRecognition.TrySetResult(0);
+                _stopRecognition.TrySetResult(0);
 
                 Console.WriteLine("Aguardando uma tecla..");
                 Console.ReadKey();
             };
-
-
-            Console.WriteLine("Comece a falar..");
-
-            var result = await _speechRecognizer.RecognizeOnceAsync();
-            var reason = GetRecognitionResultReason(result);
-
-            Console.WriteLine(reason);
-
-            Console.WriteLine("Aguardando uma tecla..");
-            Console.ReadKey();
         }
 
-        private static string GetRecognitionResultReason(SpeechRecognitionResult result)
+        public abstract Task StartRecorder();
+
+        protected static string GetRecognitionResultReason(SpeechRecognitionResult result)
         {
 
             switch (result.Reason)
