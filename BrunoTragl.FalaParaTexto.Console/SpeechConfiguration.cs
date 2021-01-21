@@ -15,8 +15,7 @@ namespace BrunoTragl.FalaParaTexto.ConsoleApp
             var chave = ConfigurationManager.AppSettings["chave_azure"];
             var idioma = "pt-BR";
             var uri = new Uri("https://brazilsouth.api.cognitive.microsoft.com/sts/v1.0/issuetoken");
-            var keyEndpoint = "74fdd730baed46a484993b1bf9c20ef1";
-            _speechConfig = SpeechConfig.FromEndpoint(uri, keyEndpoint);
+            _speechConfig = SpeechConfig.FromEndpoint(uri, chave);
             _speechConfig.SpeechRecognitionLanguage = idioma;
         }
 
